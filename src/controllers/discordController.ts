@@ -6,13 +6,19 @@ export const sendDiscordNotification = async (
   req: Request<object, object, DiscordNotificationBody>,
   res: Response,
 ): Promise<void> => {
-  const { username, content, embeds } = req.body;
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
   if (!webhookUrl) {
     res.status(500).json({ error: 'DISCORD_WEBHOOK_URL is not configured' });
     return;
   }
+
+  if (!req.body || typeof req.body !== 'object') {
+    res.status(400).json({ error: 'Request body is missing or not valid JSON. Ensure Content-Type is application/json.' });
+    return;
+  }
+
+  const { username, content, embeds } = req.body;
 
   try {
     const response = await axios.post(webhookUrl, { username, content, embeds });

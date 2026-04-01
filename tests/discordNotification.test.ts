@@ -99,4 +99,13 @@ describe('POST /discord-notification', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Failed to send Discord notification');
   });
+
+  it('should return 400 when Content-Type is not application/json', async () => {
+    const res = await request(app)
+      .post('/discord-notification')
+      .send('plain text body');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('Request body is missing or not valid JSON');
+  });
 });
