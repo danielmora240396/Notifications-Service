@@ -108,4 +108,26 @@ describe('POST /discord-notification', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Request body is missing or not valid JSON');
   });
+
+  it('should include Access-Control-Allow-Origin header in response', async () => {
+    mockedAxios.post.mockResolvedValue({ status: 204 });
+
+    const res = await request(app)
+      .post('/discord-notification')
+      .set('Origin', 'http://example.com')
+      .send(sampleBody)
+      .set('Content-Type', 'application/json');
+
+    expect(res.headers['access-control-allow-origin']).toBeDefined();
+  });
+
+  it('should respond to preflight OPTIONS request with CORS headers', async () => {
+    const res = await request(app)
+      .options('/discord-notification')
+      .set('Origin', 'http://example.com')
+      .set('Access-Control-Request-Method', 'POST');
+
+    expect(res.status).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBeDefined();
+  });
 });
