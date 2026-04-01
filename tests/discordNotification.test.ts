@@ -1,9 +1,11 @@
-const request = require('supertest');
-const axios = require('axios');
-const app = require('../app');
+import request from 'supertest';
+import axios from 'axios';
+import app from '../app';
+import { DiscordNotificationBody } from '../src/types/discord';
 
 jest.mock('axios');
 
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 const WEBHOOK_URL = 'https://discord.com/api/webhooks/test/token';
 
 beforeEach(() => {
@@ -15,7 +17,7 @@ afterEach(() => {
   delete process.env.DISCORD_WEBHOOK_URL;
 });
 
-const sampleBody = {
+const sampleBody: DiscordNotificationBody = {
   username: 'Finance Bot',
   content: '💳 Transaction Registered',
   embeds: [
@@ -34,7 +36,7 @@ const sampleBody = {
 
 describe('POST /discord-notification', () => {
   it('should forward the payload to Discord and return 200', async () => {
-    axios.post.mockResolvedValue({ status: 204 });
+    mockedAxios.post.mockResolvedValue({ status: 204 });
 
     const res = await request(app)
       .post('/discord-notification')
@@ -43,7 +45,7 @@ describe('POST /discord-notification', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Notification sent successfully');
-    expect(axios.post).toHaveBeenCalledWith(WEBHOOK_URL, {
+    expect(mockedAxios.post).toHaveBeenCalledWith(WEBHOOK_URL, {
       username: sampleBody.username,
       content: sampleBody.content,
       embeds: sampleBody.embeds,
@@ -51,9 +53,9 @@ describe('POST /discord-notification', () => {
   });
 
   it('should forward multiple embeds to Discord', async () => {
-    axios.post.mockResolvedValue({ status: 204 });
+    mockedAxios.post.mockResolvedValue({ status: 204 });
 
-    const bodyWithMultipleEmbeds = {
+    const bodyWithMultipleEmbeds: DiscordNotificationBody = {
       ...sampleBody,
       embeds: [...sampleBody.embeds, ...sampleBody.embeds],
     };
@@ -64,7 +66,7 @@ describe('POST /discord-notification', () => {
       .set('Content-Type', 'application/json');
 
     expect(res.status).toBe(200);
-    expect(axios.post).toHaveBeenCalledWith(WEBHOOK_URL, {
+    expect(mockedAxios.post).toHaveBeenCalledWith(WEBHOOK_URL, {
       username: bodyWithMultipleEmbeds.username,
       content: bodyWithMultipleEmbeds.content,
       embeds: bodyWithMultipleEmbeds.embeds,
@@ -87,7 +89,7 @@ describe('POST /discord-notification', () => {
     const discordError = {
       response: { status: 400, data: { message: 'Bad Request' } },
     };
-    axios.post.mockRejectedValue(discordError);
+    mockedAxios.post.mockRejectedValue(discordError);
 
     const res = await request(app)
       .post('/discord-notification')
